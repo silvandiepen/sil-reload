@@ -4,52 +4,97 @@
 
 <script>
 export default {
+	props: {
+		offsetY: {
+			type: Number,
+			default: -100
+		},
+		offsetYsmall: {
+			type: Number,
+			default: -50
+		},
+		smallScreen: {
+			type: Number,
+			default: 750
+		},
+		startDelay: {
+			type: Number,
+			default: 500
+		},
+		reloadDelay: {
+			type: Number,
+			default: 500
+		},
+		parentClass: {
+			type: String,
+			default: '.page'
+		}
+	},
 	data() {
 		return {
 			timeoutTimer: function() {},
 			timoutReload: function() {},
 			reloading: false,
-			scrolling: false
+			scrolling: false,
+			triggerPoint: this.$props.offsetY
 		};
 	},
 	mounted() {
-		let _this = this;
 		if (process.browser) {
-			window.addEventListener('scroll', function(e) {
-				let triggerPoint = 0;
-				if (window.innerWidth < 750) {
-					triggerPoint = -100;
-				} else {
-					triggerPoint = -50;
-				}
-				if (window.scrollY < triggerPoint) {
-					_this.scrolling = true;
-					timeoutTimer = setTimeout(() => {
-						_this.reloading = true;
-						document.querySelector('.page').classList.add('fadeOut');
-						timoutReload = setTimeout(() => {
-							location.reload();
-						}, 500);
-					}, 500);
-				} else {
-					_this.scrolling = false;
-					clearTimeout(_this.timeoutTimer);
-					clearTimeout(_this.timeoutReload);
-				}
-			});
+			// Set basic style necessary to body
+			let body = document.querySelector('body');
+			body.style.filter = 'blur(0px)';
+			body.style.transform = 'scale(1)';
+			body.style.opacity = 1;
+			body.style.transition = 'filter 0.4s, opacity 0.4s, transform 0.4s';
+
+			// Set the triggerpoint:
+			this.setTriggerpoint();
+			// Add the listener to scroll
+			window.addEventListener('scroll', this.handleScroll);
+			// Add the listener to resize
+			window.addEventListener('resize', this.setTriggerpoint);
+		}
+	},
+	methods: {
+		setTriggerpoint() {
+			if (window.innerWidth < this.$props.smallScreen) {
+				this.triggerPoint = this.$props.offsetYsmall;
+			}
+		},
+		handleScroll() {
+			if (window.scrollY < triggerPoint) {
+				this.scrolling = true;
+				this.doReload();
+			} else {
+				this.scrolling = false;
+				clearTimeout(this.timeoutTimer);
+				clearTimeout(this.timeoutReload);
+			}
+		},
+		doReload() {
+			// Start the beginning of the reload.
+			timeoutTimer = setTimeout(() => {
+				this.reloading = true;
+
+				// Start the Reload
+				timoutReload = setTimeout(() => {
+					location.reload();
+				}, this.$props.reloadDelay);
+			}, this.$props.startDelay);
 		}
 	}
 };
 </script>
 
 <style scoped>
-.page {
+body {
 	filter: blur(0px);
 	transform: scale(1);
 	opacity: 1;
 	transition: filter 0.4s, opacity 0.4s, transform 0.4s;
 }
-.page.fadeOut {
+body.fadeOut {
 	opacity: 0.5;
 	transform: scale(1.1);
 	filter: blur(20px);
